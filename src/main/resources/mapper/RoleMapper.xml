@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="club.luckylight.mapper.RoleMapper">
+    <resultMap id="BaseResultMap" type="club.luckylight.model.Role">
+        <!--
+          WARNING - @mbg.generated
+        -->
+        <id column="role_id" jdbcType="INTEGER" property="roleId"/>
+        <result column="role_name" jdbcType="VARCHAR" property="roleName"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+        <result column="status" jdbcType="TINYINT" property="status"/>
+    </resultMap>
+
+    <resultMap id="UseableRole" type="club.luckylight.dto.UseableRoleDto">
+        <id column="role_id" jdbcType="INTEGER" property="roleId"/>
+        <result column="role_name" jdbcType="VARCHAR" property="roleName"/>
+    </resultMap>
+
+    <select id="getUseableRole" resultMap="UseableRole">
+        SELECT r.role_id, r.role_name from role r WHERE r.status = 1
+    </select>
+
+    <insert id="insert" parameterType="club.luckylight.model.Role" useGeneratedKeys="true" keyProperty="roleId">
+        INSERT INTO role (role_name, create_time, update_time, status) VALUES (#{roleName}, #{createTime}, #{updateTime}, #{status})
+    </insert>
+
+    <update id="banRole" parameterType="String">
+      UPDATE role SET status = 0 WHERE role_id = #{id}
+    </update>
+
+    <update id="allowRole" parameterType="String">
+      UPDATE role SET status = 1 WHERE role_id = #{id}
+    </update>
+
+    <update id="updateRole" parameterType="club.luckylight.model.Role">
+        UPDATE role SET role_name = #{roleName}, update_time = #{updateTime} WHERE role_id = #{roleId}
+    </update>
+</mapper>
