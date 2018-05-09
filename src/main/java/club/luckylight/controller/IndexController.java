@@ -16,6 +16,6 @@ public class IndexController {
 
     @GetMapping("/")
     public String home() {
-        return "";
+        return "/index.html";
     }
 }

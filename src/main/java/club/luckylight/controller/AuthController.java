@@ -79,4 +79,9 @@ public class AuthController {
 
         return Result.ok(infoResponseVo);
     }
+
+    @PostMapping("/logout")
+    public Result logout() {
+        return Result.ok(null);
+    }
 }
