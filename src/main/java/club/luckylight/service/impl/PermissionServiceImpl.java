@@ -1,6 +1,7 @@
 package club.luckylight.service.impl;
 
 import club.luckylight.dto.UseablePermissionDto;
+import club.luckylight.mapper.FlowMapper;
 import club.luckylight.mapper.PermissionMapper;
 import club.luckylight.model.Permission;
 import club.luckylight.model.flow.*;
@@ -21,17 +22,16 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 public class PermissionServiceImpl implements PermissionService {
 
-    AtomicInteger atomicFlowId = new AtomicInteger(1);
-
     @Autowired
     private PermissionMapper permissionMapper;
 
+    @Autowired
+    private FlowMapper flowMapper;
 
     @Override
     public Page<Permission> getPermissionList(PermissionListRequestVo vo) {
@@ -48,90 +48,53 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public Boolean addPermission(PermissionAddRequestVo vo) {
-        int flowId = atomicFlowId.getAndAdd(1);
+        int flowId = getFlowId();
         String result;
         String flowBody;
 
-        if (ObjectUtil.isNull(vo.getPermissionPort())) {
-            EthernetType ethernetType = new EthernetType();
-            ethernetType.setType("2048");
+        EthernetType ethernetType = new EthernetType();
+        ethernetType.setType("2048");
 
-            EthernetMatch ethernetMatch = new EthernetMatch();
-            ethernetMatch.setEthernetType(ethernetType);
+        EthernetMatch ethernetMatch = new EthernetMatch();
+        ethernetMatch.setEthernetType(ethernetType);
 
-            Match match = new Match();
-            match.setEthernetMatch(ethernetMatch);
-            match.setIpv4Destination(vo.getPermissionIp() + "/32");
+        Match match = new Match();
+        match.setEthernetMatch(ethernetMatch);
+        match.setIpv4Destination(vo.getPermissionIp() + "/32");
 
-            ApplyActions applyActions = new ApplyActions();
-            applyActions.setAction(new DropAction());
-
-            Instruction instruction = new Instruction();
-            instruction.setApplyActions(applyActions);
-
-            Instructions instructions = new Instructions();
-            instructions.setInstruction(instruction);
-
-            Flow flow = new Flow();
-            flow.setFlowId(String.valueOf(flowId));
-            flow.setIdleTimeout(0L);
-            flow.setHardTimeout(0L);
-            flow.setPriority("100");
-            flow.setTableId("0");
-            flow.setMatch(match);
-            flow.setInstructions(instructions);
-
-            List<Flow> flowList = new ArrayList<>();
-            flowList.add(flow);
-
-            AddFlowRequestVo addFlowRequestVo = new AddFlowRequestVo();
-            addFlowRequestVo.setFlow(flowList);
-
-            flowBody = JSON.toJSONString(addFlowRequestVo);
-            result = ODLUtils.addFlow("60.205.190.37", "8181", "1", flowId, flowBody);
-        } else {
-            EthernetType ethernetType = new EthernetType();
-            ethernetType.setType("2048");
-
-            EthernetMatch ethernetMatch = new EthernetMatch();
-            ethernetMatch.setEthernetType(ethernetType);
-
+        if (ObjectUtil.isNotNull(vo.getPermissionPort())) {
             IpMatch ipMatch = new IpMatch();
             ipMatch.setIpProtocol("6");
-
-            Match match = new Match();
-            match.setEthernetMatch(ethernetMatch);
             match.setIpMatch(ipMatch);
-            match.setIpv4Destination(vo.getPermissionIp() + "/32");
             match.setTcpDestinationPort(vo.getPermissionPort().toString());
-
-            ApplyActions applyActions = new ApplyActions();
-            applyActions.setAction(new DropAction());
-
-            Instruction instruction = new Instruction();
-            instruction.setApplyActions(applyActions);
-
-            Instructions instructions = new Instructions();
-            instructions.setInstruction(instruction);
-
-            Flow flow = new Flow();
-            flow.setFlowId(String.valueOf(flowId));
-            flow.setIdleTimeout(0L);
-            flow.setHardTimeout(0L);
-            flow.setPriority("100");
-            flow.setTableId("0");
-            flow.setMatch(match);
-            flow.setInstructions(instructions);
-
-            List<Flow> flowList = new ArrayList<>();
-            flowList.add(flow);
-
-            AddFlowRequestVo addFlowRequestVo = new AddFlowRequestVo();
-            addFlowRequestVo.setFlow(flowList);
-
-            flowBody = JSON.toJSONString(addFlowRequestVo);
-            result = ODLUtils.addFlow("60.205.190.37", "8181", "1", flowId, flowBody);
         }
+
+        ApplyActions applyActions = new ApplyActions();
+        applyActions.setAction(new DropAction());
+
+        Instruction instruction = new Instruction();
+        instruction.setApplyActions(applyActions);
+
+        Instructions instructions = new Instructions();
+        instructions.setInstruction(instruction);
+
+        Flow flow = new Flow();
+        flow.setFlowId(String.valueOf(flowId));
+        flow.setIdleTimeout(0L);
+        flow.setHardTimeout(0L);
+        flow.setPriority("100");
+        flow.setTableId("0");
+        flow.setMatch(match);
+        flow.setInstructions(instructions);
+
+        List<Flow> flowList = new ArrayList<>();
+        flowList.add(flow);
+
+        AddFlowRequestVo addFlowRequestVo = new AddFlowRequestVo();
+        addFlowRequestVo.setFlow(flowList);
+
+        flowBody = JSON.toJSONString(addFlowRequestVo);
+        result = ODLUtils.addFlow("60.205.190.37", "8181", "1", flowId, flowBody);
 
         // 如果下发失败
         if (StrUtil.isNotBlank(result)) {
@@ -202,86 +165,51 @@ public class PermissionServiceImpl implements PermissionService {
             return false;
         }
 
-        if (ObjectUtil.isNull(vo.getPermissionPort())) {
-            EthernetType ethernetType = new EthernetType();
-            ethernetType.setType("2048");
+        EthernetType ethernetType = new EthernetType();
+        ethernetType.setType("2048");
 
-            EthernetMatch ethernetMatch = new EthernetMatch();
-            ethernetMatch.setEthernetType(ethernetType);
+        EthernetMatch ethernetMatch = new EthernetMatch();
+        ethernetMatch.setEthernetType(ethernetType);
 
-            Match match = new Match();
-            match.setEthernetMatch(ethernetMatch);
-            match.setIpv4Destination(vo.getPermissionIp() + "/32");
+        Match match = new Match();
+        match.setEthernetMatch(ethernetMatch);
+        match.setIpv4Destination(vo.getPermissionIp() + "/32");
 
-            ApplyActions applyActions = new ApplyActions();
-            applyActions.setAction(new DropAction());
-
-            Instruction instruction = new Instruction();
-            instruction.setApplyActions(applyActions);
-
-            Instructions instructions = new Instructions();
-            instructions.setInstruction(instruction);
-
-            Flow flow = new Flow();
-            flow.setFlowId(vo.getFlowId().toString());
-            flow.setIdleTimeout(0L);
-            flow.setHardTimeout(0L);
-            flow.setPriority("100");
-            flow.setTableId("0");
-            flow.setMatch(match);
-            flow.setInstructions(instructions);
-
-            List<Flow> flowList = new ArrayList<>();
-            flowList.add(flow);
-
-            AddFlowRequestVo addFlowRequestVo = new AddFlowRequestVo();
-            addFlowRequestVo.setFlow(flowList);
-
-            flowBody = JSON.toJSONString(addFlowRequestVo);
-            addResult = ODLUtils.addFlow("60.205.190.37", "8181", "1", vo.getFlowId(), flowBody);
-        } else {
-            EthernetType ethernetType = new EthernetType();
-            ethernetType.setType("2048");
-
-            EthernetMatch ethernetMatch = new EthernetMatch();
-            ethernetMatch.setEthernetType(ethernetType);
+        if (ObjectUtil.isNotNull(vo.getPermissionPort())) {
+            match.setTcpDestinationPort(vo.getPermissionPort().toString());
 
             IpMatch ipMatch = new IpMatch();
             ipMatch.setIpProtocol("6");
-
-            Match match = new Match();
-            match.setEthernetMatch(ethernetMatch);
             match.setIpMatch(ipMatch);
-            match.setIpv4Destination(vo.getPermissionIp() + "/32");
-            match.setTcpDestinationPort(vo.getPermissionPort().toString());
-
-            ApplyActions applyActions = new ApplyActions();
-            applyActions.setAction(new DropAction());
-
-            Instruction instruction = new Instruction();
-            instruction.setApplyActions(applyActions);
-
-            Instructions instructions = new Instructions();
-            instructions.setInstruction(instruction);
-
-            Flow flow = new Flow();
-            flow.setFlowId(vo.getFlowId().toString());
-            flow.setIdleTimeout(0L);
-            flow.setHardTimeout(0L);
-            flow.setPriority("100");
-            flow.setTableId("0");
-            flow.setMatch(match);
-            flow.setInstructions(instructions);
-
-            List<Flow> flowList = new ArrayList<>();
-            flowList.add(flow);
-
-            AddFlowRequestVo addFlowRequestVo = new AddFlowRequestVo();
-            addFlowRequestVo.setFlow(flowList);
-
-            flowBody = JSON.toJSONString(addFlowRequestVo);
-            addResult = ODLUtils.addFlow("60.205.190.37", "8181", "1", vo.getFlowId(), flowBody);
         }
+
+        ApplyActions applyActions = new ApplyActions();
+        applyActions.setAction(new DropAction());
+
+        Instruction instruction = new Instruction();
+        instruction.setApplyActions(applyActions);
+
+        Instructions instructions = new Instructions();
+        instructions.setInstruction(instruction);
+
+        Flow flow = new Flow();
+        flow.setFlowId(vo.getFlowId().toString());
+        flow.setIdleTimeout(0L);
+        flow.setHardTimeout(0L);
+        flow.setPriority("100");
+        flow.setTableId("0");
+        flow.setMatch(match);
+        flow.setInstructions(instructions);
+
+        List<Flow> flowList = new ArrayList<>();
+        flowList.add(flow);
+
+        AddFlowRequestVo addFlowRequestVo = new AddFlowRequestVo();
+        addFlowRequestVo.setFlow(flowList);
+
+        flowBody = JSON.toJSONString(addFlowRequestVo);
+        addResult = ODLUtils.addFlow("60.205.190.37", "8181", "1", vo.getFlowId(), flowBody);
+
         // 如果下发失败
         if (StrUtil.isNotBlank(addResult)) {
             return false;
@@ -297,5 +225,14 @@ public class PermissionServiceImpl implements PermissionService {
         permission.setFlowBody(flowBody);
 
         return permissionMapper.updatePermission(permission) == 1;
+    }
+
+    private int getFlowId() {
+        club.luckylight.model.Flow flow = new club.luckylight.model.Flow();
+        flow.setCreateTime(new Date());
+        flow.setUpdateTime(new Date());
+        flowMapper.insert(flow);
+
+        return flow.getId();
     }
 }
